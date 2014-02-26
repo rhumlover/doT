@@ -97,6 +97,18 @@
 			.replace(c.interpolate || skip, function(m, code) {
 				return cse.start + unescape(code) + cse.end;
 			})
+			.replace(c.helper || skip, function(m, code) {
+				needhtmlencode = true;
+				var formattedCode = unescape(code),
+					fn = formattedCode.match(/([^\(]+)\(.*/),
+					fnName;
+
+				if (fn && fn.length) {
+					fnName = fn[1];
+					formattedCode = 'this.helpers["' + fnName.trim() + '"]' + formattedCode.replace(fnName, '');
+				}
+				return cse.start + ' ' + formattedCode.trim() + ' ' + cse.end;
+			})
 			.replace(c.encode || skip, function(m, code) {
 				needhtmlencode = true;
 				return cse.start + unescape(code) + cse.endencode;
@@ -114,18 +126,6 @@
 			})
 			.replace(c.evaluate || skip, function(m, code) {
 				return "';" + unescape(code) + "out+='";
-			})
-			.replace(c.helper || skip, function(m, code) {
-				needhtmlencode = true;
-				var formattedCode = unescape(code),
-					fn = formattedCode.match(/([^\(]+)\(.*/),
-					fnName;
-
-				if (fn && fn.length) {
-					fnName = fn[1];
-					formattedCode = 'this.helpers["' + fnName.trim() + '"]' + formattedCode.replace(fnName, '');
-				}
-				return cse.start + ' ' + formattedCode.trim() + ' ' + cse.end;
 			})
 			+ "';return out;")
 			.replace(/\n/g, '\\n').replace(/\t/g, '\\t').replace(/\r/g, '\\r')
