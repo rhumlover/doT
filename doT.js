@@ -12,6 +12,7 @@
 			interpolate: /\{\{=([\s\S]+?)\}\}/g,
 			encode:      /\{\{!([\s\S]+?)\}\}/g,
 			use:         /\{\{#([\s\S]+?)\}\}/g,
+			helper:      /\{\{@([\s\S]+?)\}\}/g,
 			useParams:   /(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})/g,
 			define:      /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g,
 			defineParams:/^\s*([\w$]+):([\s\S]+)/,
@@ -113,6 +114,18 @@
 			})
 			.replace(c.evaluate || skip, function(m, code) {
 				return "';" + unescape(code) + "out+='";
+			})
+			.replace(c.helper || skip, function(m, code) {
+				needhtmlencode = true;
+				var formattedCode = unescape(code),
+					fn = formattedCode.match(/([^\(]+)\(.*/),
+					fnName;
+
+				if (fn && fn.length) {
+					fnName = fn[1];
+					formattedCode = 'this.helpers["' + fnName.trim() + '"]' + formattedCode.replace(fnName, '');
+				}
+				return cse.start + ' ' + formattedCode.trim() + ' ' + cse.end;
 			})
 			+ "';return out;")
 			.replace(/\n/g, '\\n').replace(/\t/g, '\\t').replace(/\r/g, '\\r')
